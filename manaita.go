@@ -33,6 +33,8 @@ var (
 func main() {
 	flag.Parse()
 
+	fmt.Println("p", *p)
+
 	envMap := envToMap()
 	currentDir, _ := os.Getwd()
 	givenParamMap := paramToMap(*p)
