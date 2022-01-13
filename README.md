@@ -7,7 +7,7 @@ Simple Markdown-Driven Code Generator written by Go
 # Installation
 
 ```shell
-go install github.com/igtm/manaita
+go install github.com/igtm/manaita@latest
 ```
 
 # Getting Started
