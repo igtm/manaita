@@ -32,7 +32,7 @@ Available options:
 Available template params:
 
 ```
-  {{.ENV}}            can access environment variables
+  {{.Env}}            can access environment variables
   {{.Params}}         can access given parameters by '-p' option, which must be defined on 'Params' field of markdown header.
 ```
 
