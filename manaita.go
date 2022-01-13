@@ -110,6 +110,14 @@ func main() {
 		if strings.Contains(loc, DestFileNameStartCode) {
 			// dest filename
 			destFileName := strings.Replace(loc, DestFileNameStartCode, "", -1)
+			// compile filename
+			tmpl := template.Must(template.New("").Parse(destFileName))
+			var compiledDest bytes.Buffer
+			err = tmpl.Execute(&compiledDest, map[string]interface{}{
+				"Env":    envMap,
+				"Params": paramMap,
+			})
+			destFileName = compiledDest.String()
 			dest = filepath.Join(currentDir, destFileName)
 			searchCode = true
 		}

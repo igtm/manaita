@@ -32,7 +32,7 @@ func Hoge() {
 ```
 
 
-# foo/bar.go
+# {{.Params.fuga}}/bar.go
 
 ```golang
 package foo
