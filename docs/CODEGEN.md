@@ -5,7 +5,7 @@ Params:
 - name
 ---
 
-# ./foo.go
+# foo.go
 
 ```golang
 package foo

@@ -6,7 +6,7 @@ Params:
 - fuga
 ---
 
-# ./hoge.go
+# hoge.go
 
 ```golang
 package hoge
@@ -19,7 +19,7 @@ func Hoge() {
 }
 ```
 
-# ./fuga.go
+# fuga.go
 
 ```golang
 package hoge
@@ -32,7 +32,7 @@ func Hoge() {
 ```
 
 
-# ./foo/bar.go
+# foo/bar.go
 
 ```golang
 package foo
