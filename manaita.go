@@ -173,6 +173,10 @@ func envToMap() map[string]string {
 func paramToMap(p string) map[string]string {
 	paramMap := make(map[string]string)
 
+	if p == "" {
+		return paramMap
+	}
+
 	for _, v := range strings.Split(p, ",") {
 		splitV := strings.Split(v, "=")
 		if len(splitV) < 2 {
