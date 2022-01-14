@@ -1,0 +1,58 @@
+before:
+  hooks:
+    - go mod tidy # tidyしておけば間違いない
+builds:
+  - main: ./
+    env:
+      - CGO_ENABLED=0
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^example:'
+brews:
+  -
+    # Name template of the recipe
+    # Default to project name
+    name: manaita
+
+    # Github repository to push the tap to.
+    github:
+      owner: igtm
+      name: homebrew-tap
+
+    # Template for the url which is determined by the given Token (github or gitlab)
+    # Default for github is "https://github.com/<repo_owner>/<repo_name>/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    # Default for gitlab is "https://gitlab.com/<repo_owner>/<repo_name>/uploads/{{ .ArtifactUploadHash }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/igtm/manaita/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+
+    # Git author used to commit to the repository.
+    # Defaults are shown.
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@carlosbecker.com
+
+    # Your app's homepage.
+    # Default is empty.
+    homepage: "https://github.com/igtm/manaita"
+
+    # Your app's description.
+    # Default is empty.
+    description: "Simple Markdown-Driven Code Generator written by Go"
+
+    # Custom install script for brew.
+    # Default is 'bin.install "program"'.
+    install: |
+      bin.install "manaita"
