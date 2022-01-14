@@ -2,6 +2,10 @@
 
 Simple Markdown-Driven Code Generator written by Go
 
+Write your scaffolding code on `CODEGEN.md` and generate files using the scaffold.
+
+Template file is Markdown format. so you can see it on Github and easily understand what will be generated.
+
 ![manaita](./docs/manaita.png "manaita")
 
 # Installation
@@ -12,15 +16,39 @@ go install github.com/igtm/manaita@latest
 
 # Getting Started
 
-1. place sample [CODEGEN.md](./docs/CODEGEN.md) on your directory you like
-2. Run `manaita`
+1. put `CODEGEN.md` on your directory
 
+````
+---
+Params:
+- name
+---
+
+# foo.go
+
+```golang
+package foo
+
+var foo = "foo"
+```
+
+
+# {{.Params.name}}/bar.py
+
+```python
+print("bar.py")
+```
+````
+
+
+2. Run `manaita -p name=dog`
+3. `foo.go` and `dog/bar.py` files are generated
 
 # Usage
 
-1. Place `CODEGEN.md` on your directory you like
-2. Write scaffold code on it
-3. Run `manaita`
+```shell
+manaita -c ./path/to/CODEGEN.md -p key=value
+```
 
 Available options:
 
