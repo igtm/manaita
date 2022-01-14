@@ -50,7 +50,7 @@ brews:
 
     # Your app's description.
     # Default is empty.
-    description: "Simple Markdown-Driven Code Generator written by Go"
+    description: "Simple Markdown-Driven Scaffolding tool written by Go"
 
     # Custom install script for brew.
     # Default is 'bin.install "program"'.

@@ -18,14 +18,15 @@ import (
 )
 
 const (
-	DefaultCodeGenFileName = "CODEGEN.md"
-	YamlMetaStartCode      = "---"
-	DestFileNameStartCode  = "# "
-	CodeTemplateStartCode  = "```"
+	DefaultScaffoldFileName           = "SCAFFOLD.md"
+	DeprecatedDefaultScaffoldFileName = "CODEGEN.md" // deprecated
+	YamlMetaStartCode                 = "---"
+	DestFileNameStartCode             = "# "
+	CodeTemplateStartCode             = "```"
 )
 
 var (
-	c = flag.String("c", DefaultCodeGenFileName, "template markdown file path")
+	c = flag.String("c", DefaultScaffoldFileName, "scaffold markdown file path")
 	p = flag.String("p", "", "template params")
 
 	funcMap = template.FuncMap{
@@ -43,24 +44,32 @@ var (
 func main() {
 	flag.Parse()
 
+	errlog := log.New(os.Stderr, "ERROR: ", 0)
+
 	envMap := envToMap()
 	currentDir, _ := os.Getwd()
 	givenParamMap := paramToMap(*p)
 
-	codegenFileName := fmt.Sprintf("%s/%s", currentDir, *c)
+	scaffoldFileName := fmt.Sprintf("%s/%s", currentDir, *c)
 
-	codegenFile, err := os.Open(codegenFileName)
-	die(err)
-	defer codegenFile.Close()
+	scaffoldFile, err := os.Open(scaffoldFileName)
+	if err != nil {
+		scaffoldFile, err = os.Open(DeprecatedDefaultScaffoldFileName)
+	}
+	if err != nil {
+		errlog.Println(fmt.Errorf("cannot find '%s'", DefaultScaffoldFileName))
+		return
+	}
+	defer scaffoldFile.Close()
 
-	sc := bufio.NewScanner(codegenFile)
+	sc := bufio.NewScanner(scaffoldFile)
 
 	var foundMeta bool
 	var endMeta bool
 	var metaStr string
 	var metaData map[string]interface{}
 	paramMap := make(map[string]string)
-	var code, dest string
+	var code, dest, destFileName string
 	var searchCode bool
 	var foundCode bool
 	for sc.Scan() {
@@ -119,7 +128,8 @@ func main() {
 		}
 		if strings.Contains(loc, DestFileNameStartCode) {
 			// dest filename
-			destFileName := strings.Replace(loc, DestFileNameStartCode, "", -1)
+			destFileName = strings.Replace(loc, DestFileNameStartCode, "", -1)
+			destFileName = strings.Trim(destFileName, " ")
 			// compile filename
 			tmpl := template.Must(template.New("").Funcs(funcMap).Parse(destFileName))
 			var compiledDest bytes.Buffer
@@ -138,20 +148,27 @@ func main() {
 					// recursively make directories
 					os.MkdirAll(filepath.Dir(dest), os.ModePerm)
 					destFile, err := os.Create(dest)
-					die(err)
+					if err != nil {
+						errlog.Println(fmt.Errorf("cannot Create '%s'", dest))
+						return
+					}
 					defer destFile.Close()
-					fmt.Println(dest)
+					fmt.Println(destFileName)
 
 					tmpl := template.Must(template.New("").Funcs(funcMap).Parse(code))
 					err = tmpl.Execute(destFile, map[string]interface{}{
 						"Env":    envMap,
 						"Params": paramMap,
 					})
-					die(err)
+					if err != nil {
+						errlog.Println(fmt.Errorf("cannot write code to file '%s'", dest))
+						return
+					}
 					searchCode = false
 					foundCode = false
 					code = ""
 					dest = ""
+					destFileName = ""
 					continue
 				}
 				// start
@@ -163,17 +180,8 @@ func main() {
 			}
 		}
 	}
-
-	die(sc.Err())
-
 }
 
-func die(err error) {
-	if err != nil {
-		fmt.Println(err)
-		log.Fatal(err)
-	}
-}
 func envToMap() map[string]string {
 	envMap := make(map[string]string)
 

@@ -1,10 +1,10 @@
 # Manaita
 
-Simple Markdown-Driven Code Generator written by Go
+Simple Markdown-Driven Scaffolding tool written by Go
 
-Write your scaffolding code on `CODEGEN.md` and generate files using the scaffold.
+Write your scaffolding code on `SCAFFOLD.md` and generate files using the scaffold.
 
-Template file is Markdown format. so you can see it on Github and easily understand what will be generated.
+Scaffold file is Markdown format. so you can see it on Github and easily understand what will be generated.
 
 ![manaita](./docs/manaita.png "manaita")
 
@@ -24,7 +24,7 @@ go install github.com/igtm/manaita@latest
 
 # Getting Started
 
-1. put `CODEGEN.md` on your directory
+1. put `SCAFFOLD.md` on your directory
 
 ````
 ---
@@ -55,14 +55,14 @@ print("bar.py")
 # Usage
 
 ```shell
-manaita -c ./path/to/CODEGEN.md -p key=value
+manaita -c ./path/to/SCAFFOLD.md -p key=value
 ```
 
 Available options:
 
 ```
-  -c                  specify markdown template file path. default name is 'CODEGEN.md'
-  -p                  specify parameters for code gen. these must be defined on markdown  e.g. '-p foo=bar,fizz=buzz'
+  -c                  specify markdown scaffold file path. default name is 'SCAFFOLD.md'
+  -p                  specify parameters for scaffold template. these must be defined on markdown  e.g. '-p foo=bar,fizz=buzz'
 ```
 
 Available template params:
