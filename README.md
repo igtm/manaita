@@ -64,6 +64,25 @@ Available template params:
   {{.Params}}         can access given parameters by '-p' option, which must be defined on 'Params' field of markdown header.
 ```
 
+Available template functions:
+
+`AnyKind of_string`
+
+| Function           | Result               |
+|--------------------|----------------------|
+| `ToUpper`          | `ANY KIND OF_STRING` |
+| `ToLower`          | `anykind of_string`  |
+| `ToSnake`          | `any_kind_of_string` |
+| `ToScreamingSnake` | `ANY_KIND_OF_STRING` |
+| `ToKebab`          | `any-kind-of-string` |
+| `ToScreamingKebab` | `ANY-KIND-OF-STRING` |
+| `ToCamel`          | `AnyKindOfString`    |
+| `ToLowerCamel`     | `anyKindOfString`    |
+
+This library uses [Go Template](https://pkg.go.dev/text/template).
+
+so you can use any Go Template syntax like '{{if foo}} .. {{end}}' and like that.
+
 # references
 
 - [example code](./example)

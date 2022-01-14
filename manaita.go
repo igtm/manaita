@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/iancoleman/strcase"
 	"github.com/yuin/goldmark"
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/parser"
@@ -28,6 +29,17 @@ const (
 var (
 	c = flag.String("c", DefaultCodeGenFileName, "template markdown file path")
 	p = flag.String("p", "", "template params")
+
+	funcMap = template.FuncMap{
+		"ToUpper":          strings.ToUpper,
+		"ToLower":          strings.ToLower,
+		"ToSnake":          strcase.ToSnake,
+		"ToScreamingSnake": strcase.ToScreamingSnake,
+		"ToKebab":          strcase.ToKebab,
+		"ToScreamingKebab": strcase.ToScreamingKebab,
+		"ToCamel":          strcase.ToCamel,
+		"ToLowerCamel":     strcase.ToLowerCamel,
+	}
 )
 
 func main() {
@@ -111,7 +123,7 @@ func main() {
 			// dest filename
 			destFileName := strings.Replace(loc, DestFileNameStartCode, "", -1)
 			// compile filename
-			tmpl := template.Must(template.New("").Parse(destFileName))
+			tmpl := template.Must(template.New("").Funcs(funcMap).Parse(destFileName))
 			var compiledDest bytes.Buffer
 			err = tmpl.Execute(&compiledDest, map[string]interface{}{
 				"Env":    envMap,
@@ -137,7 +149,7 @@ func main() {
 						code = GoTemplateHeader + code
 					}
 
-					tmpl := template.Must(template.New("").Parse(code))
+					tmpl := template.Must(template.New("").Funcs(funcMap).Parse(code))
 					err = tmpl.Execute(destFile, map[string]interface{}{
 						"Env":    envMap,
 						"Params": paramMap,

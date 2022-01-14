@@ -3,6 +3,7 @@ module github.com/igtm/manaita
 go 1.17
 
 require (
+	github.com/iancoleman/strcase v0.2.0
 	github.com/yuin/goldmark v1.4.4
 	github.com/yuin/goldmark-meta v1.0.0
 )
