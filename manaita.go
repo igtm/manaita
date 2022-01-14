@@ -26,8 +26,8 @@ const (
 )
 
 var (
-	c = flag.String("c", DefaultScaffoldFileName, "scaffold markdown file path")
-	p = flag.String("p", "", "template params")
+	c = flag.String("c", DefaultScaffoldFileName, "specify markdown scaffold file path. default name is 'SCAFFOLD.md'")
+	p = flag.String("p", "", "specify parameters for scaffold template. these must be defined on markdown  e.g. '-p foo=bar,fizz=buzz'")
 
 	funcMap = template.FuncMap{
 		"ToUpper":          strings.ToUpper,
