@@ -1,6 +1,4 @@
 ---
-Title: example code
-Description: this is example code
 Params:
 - hoge
 - fuga
