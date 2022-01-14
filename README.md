@@ -10,6 +10,14 @@ Template file is Markdown format. so you can see it on Github and easily underst
 
 # Installation
 
+### Brew
+
+```shell
+brew install igtm/tap/manaita
+```
+
+### Go Install
+
 ```shell
 go install github.com/igtm/manaita@latest
 ```
