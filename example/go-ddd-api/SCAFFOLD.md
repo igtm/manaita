@@ -152,6 +152,26 @@ func New{{$Name}}Repository({{$name}}DB *sqlx.DB) domain{{$Name}}.Repository {
 	}
 }
 
+// WithTransaction
+func (repo *{{$name}}Repository) WithDBTransaction(ctx context.Context, txFunc func(*sqlx.Tx) error) (err error) {
+	tx, err := repo.{{$name}}DB.BeginTxx(ctx, nil)
+	if err != nil {
+		return
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback()
+			panic(p) // re-throw panic after Rollback
+		} else if err != nil {
+			_ = tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	err = txFunc(tx)
+	return err
+}
+
 // Get{{$Name}} ... 
 func (repo *{{$name}}Repository) Get{{$Name}}(ctx context.Context, id uint64) (*{{$name}}.V1{{$Name}}, error) {
 	query := sq.Select(`*`).
