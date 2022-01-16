@@ -62,6 +62,10 @@ Available options:
 
 ```
   -c                  specify markdown scaffold file path. default name is 'SCAFFOLD.md'
+                        supported types:
+                          - local path         e.g. 'path/to/SCAFFOLD.md'
+                          - go get style path: e.g. 'github.com/owner/repo/path/to/SCAFFOLD.md'
+                          - http url:          e.g. 'https://example.com/SCAFFOLD.md'
   -p                  specify parameters for scaffold template. these must be defined on markdown  e.g. '-p foo=bar,fizz=buzz'
 ```
 

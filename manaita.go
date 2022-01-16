@@ -5,9 +5,12 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -23,11 +26,18 @@ const (
 	YamlMetaStartCode                 = "---"
 	DestFileNameStartCode             = "# "
 	CodeTemplateStartCode             = "```"
+
+	GoStyleRawContentBaseURL = "https://raw.githubusercontent.com/%s/%s/master/%s" // NOTE: master always redirects to default branch only not when master exists but other is default branch.
+	GitCloneHTTPBaseURL      = "https://github.com/%s/%s.git"
 )
 
 var (
 	c = flag.String("c", DefaultScaffoldFileName, "specify markdown scaffold file path. default name is 'SCAFFOLD.md'")
 	p = flag.String("p", "", "specify parameters for scaffold template. these must be defined on markdown  e.g. '-p foo=bar,fizz=buzz'")
+
+	// source patterns
+	githubGoGetStyleSourceRegexp, _ = regexp.Compile("^github\\.com/([\\w\\-.]+)/([\\w\\-.]+)/([\\w\\-./]+)(@[\\w\\-./]+)?$")
+	httpSourceRegexp, _             = regexp.Compile("^https?://.+")
 
 	funcMap = template.FuncMap{
 		"ToUpper":          strings.ToUpper,
@@ -39,30 +49,65 @@ var (
 		"ToCamel":          strcase.ToCamel,
 		"ToLowerCamel":     strcase.ToLowerCamel,
 	}
+
+	errlog = log.New(os.Stderr, "ERROR: ", 0)
 )
 
 func main() {
 	flag.Parse()
 
-	errlog := log.New(os.Stderr, "ERROR: ", 0)
-
 	envMap := envToMap()
 	currentDir, _ := os.Getwd()
 	givenParamMap := paramToMap(*p)
 
-	scaffoldFileName := fmt.Sprintf("%s/%s", currentDir, *c)
+	// detect source file path type
+	var reader io.Reader
+	if ms := githubGoGetStyleSourceRegexp.FindStringSubmatch(*c); len(ms) >= 4 {
+		// go get style github source
+		owner := ms[1]
+		repo := ms[2]
+		file := ms[3]
+		resp, err := http.Get(fmt.Sprintf(GoStyleRawContentBaseURL, owner, repo, file))
+		if err != nil {
+			errlog.Println(fmt.Errorf("cannot get '%s': expected like 'github.com/owner/repo/path/to/file.md'", *c))
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			errlog.Println(fmt.Errorf("cannot get '%s': status code: %d: expected like 'github.com/owner/repo/path/to/file.md'", *c, resp.StatusCode))
+			return
+		}
+		defer resp.Body.Close()
+		reader = resp.Body
+	} else if ms := httpSourceRegexp.FindAllString(*c, -1); len(ms) == 1 {
+		// http source
+		resp, err := http.Get(ms[0])
+		if err != nil {
+			errlog.Println(fmt.Errorf("cannot get '%s'", ms[0]))
+			return
+		}
+		if resp.StatusCode != http.StatusOK {
+			errlog.Println(fmt.Errorf("cannot get '%s': status code: %d", ms[0], resp.StatusCode))
+			return
+		}
+		defer resp.Body.Close()
+		reader = resp.Body
+	} else {
+		// trying to search local file
+		scaffoldFileName := fmt.Sprintf("%s/%s", currentDir, *c)
 
-	scaffoldFile, err := os.Open(scaffoldFileName)
-	if err != nil {
-		scaffoldFile, err = os.Open(DeprecatedDefaultScaffoldFileName)
+		scaffoldFile, err := os.Open(scaffoldFileName)
+		if err != nil {
+			scaffoldFile, err = os.Open(DeprecatedDefaultScaffoldFileName)
+		}
+		if err != nil {
+			errlog.Println(fmt.Errorf("cannot find '%s'", DefaultScaffoldFileName))
+			return
+		}
+		defer scaffoldFile.Close()
+		reader = scaffoldFile
 	}
-	if err != nil {
-		errlog.Println(fmt.Errorf("cannot find '%s'", DefaultScaffoldFileName))
-		return
-	}
-	defer scaffoldFile.Close()
 
-	sc := bufio.NewScanner(scaffoldFile)
+	sc := bufio.NewScanner(reader)
 
 	var foundMeta bool
 	var endMeta bool
@@ -133,10 +178,14 @@ func main() {
 			// compile filename
 			tmpl := template.Must(template.New("").Funcs(funcMap).Parse(destFileName))
 			var compiledDest bytes.Buffer
-			err = tmpl.Execute(&compiledDest, map[string]interface{}{
+			err := tmpl.Execute(&compiledDest, map[string]interface{}{
 				"Env":    envMap,
 				"Params": paramMap,
 			})
+			if err != nil {
+				errlog.Println(fmt.Errorf("cannot compile template"))
+				return
+			}
 			destFileName = compiledDest.String()
 			dest = filepath.Join(currentDir, destFileName)
 			searchCode = true
