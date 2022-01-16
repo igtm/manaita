@@ -14,6 +14,15 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/go-git/go-git/v5/plumbing"
+
+	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+
+	"github.com/kevinburke/ssh_config"
+
+	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/iancoleman/strcase"
 	"github.com/yuin/goldmark"
 	meta "github.com/yuin/goldmark-meta"
@@ -30,6 +39,7 @@ const (
 	GoStyleRawContentDefaultBrand = "master" // NOTE: master always redirects to default branch only not when master exists but other is default branch.
 	GoStyleRawContentBaseURL      = "https://raw.githubusercontent.com/%s/%s/%s/%s"
 	GitCloneHTTPBaseURL           = "https://github.com/%s/%s.git"
+	GitCloneSSHBaseURL            = "git@github.com:%s/%s.git"
 )
 
 var (
@@ -65,24 +75,68 @@ func main() {
 	var reader io.Reader
 	if ms := githubGoGetStyleSourceRegexp.FindStringSubmatch(*c); len(ms) >= 4 {
 		// go get style github source
+		// trying to get from public raw content url
 		owner := ms[1]
 		repo := ms[2]
 		file := ms[3]
-		brand := GoStyleRawContentDefaultBrand
+		branch := GoStyleRawContentDefaultBrand
+		var specifiedBrand bool
 		if len(ms) == 5 && ms[4] != "" {
-			brand = strings.Replace(ms[4], "@", "", 1)
+			specifiedBrand = true
+			branch = strings.Replace(ms[4], "@", "", 1)
 		}
-		resp, err := http.Get(fmt.Sprintf(GoStyleRawContentBaseURL, owner, repo, brand, file))
-		if err != nil {
-			errlog.Println(fmt.Errorf("cannot get '%s': expected like 'github.com/owner/repo/path/to/file.md'", *c))
-			return
-		}
-		if resp.StatusCode != http.StatusOK {
-			errlog.Println(fmt.Errorf("cannot get '%s': status code: %d: expected like 'github.com/owner/repo/path/to/file.md'", *c, resp.StatusCode))
-			return
-		}
+		resp, err := http.Get(fmt.Sprintf(GoStyleRawContentBaseURL, owner, repo, branch, file))
 		defer resp.Body.Close()
 		reader = resp.Body
+		if err != nil || resp.StatusCode != http.StatusOK {
+			// fallback to git clone (SSH)
+			// Filesystem abstraction based on memory
+			fs := memfs.New()
+			// Git objects storer based on memory
+			storer := memory.NewStorage()
+
+			githubIdentityFile := ssh_config.Get("github.com", "IdentityFile")
+			publicKeys, err := ssh.NewPublicKeysFromFile("git", githubIdentityFile, "")
+			if err != nil {
+				errlog.Println("git clone ssh error: %s", err)
+				return
+			}
+
+			// Clones the repository into the worktree (fs) and stores all the .git
+			sshPath := fmt.Sprintf(GitCloneSSHBaseURL, owner, repo)
+			cloneOptions := &git.CloneOptions{
+				URL:  sshPath,
+				Auth: publicKeys,
+				Tags: git.AllTags,
+			}
+			if specifiedBrand {
+				// branch
+				cloneOptions.ReferenceName = plumbing.NewBranchReferenceName(branch)
+				_, err = git.Clone(storer, fs, cloneOptions)
+				// FIXME: tag cannot be cloned correctly... maybe library problem..
+				//if err != nil {
+				//	// tag
+				//	cloneOptions.ReferenceName = plumbing.NewTagReferenceName(branch)
+				//	_, err = git.Clone(storer, fs, cloneOptions)
+				//}
+			} else {
+				// default branch
+				_, err = git.Clone(storer, fs, cloneOptions)
+			}
+			if err != nil {
+				errlog.Printf("cannot git clone '%s': %s\n", sshPath, err)
+				return
+			}
+
+			// Prints the content of the CHANGELOG file from the cloned repository
+			scaffoldFile, err := fs.Open(file)
+			if err != nil {
+				errlog.Println(fmt.Errorf("cannot open file '%s'", file))
+				return
+			}
+
+			reader = scaffoldFile
+		}
 	} else if ms := httpSourceRegexp.FindAllString(*c, -1); len(ms) == 1 {
 		// http source
 		resp, err := http.Get(ms[0])

@@ -95,6 +95,19 @@ This library uses [Go Template](https://pkg.go.dev/text/template).
 
 so you can use any Go Template syntax like '{{if foo}} .. {{end}}' and like that.
 
-# references
+# References
 
-- [example code](./example)
+- [Example Code](./example)
+
+# Trouble Shooting
+
+- cannot get private repo.
+
+it is cloned through `ssh`. so you need setup `~/.ssh/config`.
+(currently only @branch is supported on private repo)
+
+- when you get `ssh: handshake failed: knownhosts: key mismatch`.
+
+```shell
+ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+```
