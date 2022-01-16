@@ -27,8 +27,9 @@ const (
 	DestFileNameStartCode             = "# "
 	CodeTemplateStartCode             = "```"
 
-	GoStyleRawContentBaseURL = "https://raw.githubusercontent.com/%s/%s/master/%s" // NOTE: master always redirects to default branch only not when master exists but other is default branch.
-	GitCloneHTTPBaseURL      = "https://github.com/%s/%s.git"
+	GoStyleRawContentDefaultBrand = "master" // NOTE: master always redirects to default branch only not when master exists but other is default branch.
+	GoStyleRawContentBaseURL      = "https://raw.githubusercontent.com/%s/%s/%s/%s"
+	GitCloneHTTPBaseURL           = "https://github.com/%s/%s.git"
 )
 
 var (
@@ -67,7 +68,11 @@ func main() {
 		owner := ms[1]
 		repo := ms[2]
 		file := ms[3]
-		resp, err := http.Get(fmt.Sprintf(GoStyleRawContentBaseURL, owner, repo, file))
+		brand := GoStyleRawContentDefaultBrand
+		if len(ms) == 5 && ms[4] != "" {
+			brand = strings.Replace(ms[4], "@", "", 1)
+		}
+		resp, err := http.Get(fmt.Sprintf(GoStyleRawContentBaseURL, owner, repo, brand, file))
 		if err != nil {
 			errlog.Println(fmt.Errorf("cannot get '%s': expected like 'github.com/owner/repo/path/to/file.md'", *c))
 			return
