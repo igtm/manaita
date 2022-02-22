@@ -29,7 +29,7 @@ brews:
     name: manaita
 
     # Github repository to push the tap to.
-    tap:
+    github:
       owner: igtm
       name: homebrew-tap
 
