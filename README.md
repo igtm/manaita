@@ -22,6 +22,12 @@ brew install igtm/tap/manaita
 go install github.com/igtm/manaita@latest
 ```
 
+### Install with curl
+
+```shell
+curl -sfL https://raw.githubusercontent.com/igtm/manaita/master/install.sh | sudo sh -s -- -b /usr/local/bin
+```
+
 # Getting Started
 
 1. put `SCAFFOLD.md` on your directory
